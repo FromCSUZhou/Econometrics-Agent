@@ -45,7 +45,7 @@ Welcome to the Econometrics AI Agent! This guide will help you install and run t
 First, clone the Econometrics AI Agent project to your local machine:
 
 ```bash
-git clone https://github.com/FromCSUZhou/Econometric-Agent
+git clone https://github.com/FromCSUZhou/Econometrics-Agent
 ```
 
 ### 2. Navigate to the Project Directory
@@ -53,7 +53,7 @@ git clone https://github.com/FromCSUZhou/Econometric-Agent
 Change into the project's root directory:
 
 ```bash
-cd Econometric-Agent
+cd Econometrics-Agent
 ```
 
 ### 3. Set Up Configuration
