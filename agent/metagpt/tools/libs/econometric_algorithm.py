@@ -10,6 +10,9 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from linearmodels import PanelOLS
 import scipy.stats
+from econml.dml import LinearDML
+from sklearn.linear_model import LogisticRegression, Lasso
+from sklearn.ensemble import RandomForestRegressor
 
 #%%
 
@@ -1247,3 +1250,67 @@ def Fuzzy_RDD_Global_Polynomial_Estimator_regression(dependent_variable,
         return model_2.rsquared
     elif target_type == "final_model":
         return model_2
+
+#%%
+
+@register_tool(tags=["econometric algorithm"])
+def Linear_Double_Machine_Learning(dependent_variable,
+                                   treatment_variable,
+                                   covariate_variables,
+                                   model_y=None,
+                                   model_t=None,
+                                   n_splits: int = 3,
+                                   random_state: int = 0,
+                                   target_type: str = "ATE"):
+
+    """
+    Use EconML's LinearDML to estimate Average Treatment Effect (ATE) via the
+    double machine learning (DML) framework.
+
+    Args:
+        dependent_variable (pd.Series): Target dependent variable with no ``NaN`` value.
+        treatment_variable (pd.Series): Target treatment variable with no ``NaN`` value.
+        covariate_variables (pd.DataFrame or None): Covariate variables. If ``None``,
+            no covariate adjustment will be performed.
+        model_y (object or None): Machine learning model for the outcome. ``RandomForestRegressor``
+            will be used by default.
+        model_t (object or None): Machine learning model for the treatment. ``RandomForestRegressor``
+            will be used by default.
+        n_splits (int): Number of cross-fitting splits.
+        random_state (int): Random seed used in the estimator.
+        target_type (str): "ATE" to return the estimated average treatment effect or
+            "final_model" to return the fitted ``LinearDML`` estimator.
+
+    Returns:
+        float or econml.dml.LinearDML: The estimated ATE or the fitted estimator.
+    """
+
+    # Adjust input type
+    dependent_variable = dependent_variable.astype(float)
+    treatment_variable = treatment_variable.astype(float)
+    if covariate_variables is not None:
+        covariate_variables = covariate_variables.astype(float)
+
+    if model_y is None:
+        model_y = RandomForestRegressor(n_estimators=100, random_state=random_state)
+    if model_t is None:
+        model_t = RandomForestRegressor(n_estimators=100, random_state=random_state)
+
+    discrete_treat = set(treatment_variable.dropna().unique()) <= {0, 1}
+    estimator = LinearDML(model_y=model_y,
+                          model_t=model_t,
+                          discrete_treatment=discrete_treat,
+                          cv=n_splits,
+                          random_state=random_state)
+
+    estimator.fit(Y=dependent_variable,
+                  T=treatment_variable,
+                  X=covariate_variables)
+
+    ate = estimator.ate(X=covariate_variables)
+    print("Estimated ATE: ", ate)
+
+    if target_type == "final_model":
+        return estimator
+    else:
+        return ate

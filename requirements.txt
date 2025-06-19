@@ -89,3 +89,4 @@ websockets>=10.0,<12.0
 wrapt==1.15.0
 xlrd
 zhipuai==2.0.1
+econml==0.15.1
